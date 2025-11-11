@@ -365,7 +365,7 @@
 
                 for (const horse of horses) {
                     // Base speed
-                    let speed = 0.875 + Math.random() * 1.75; // Base: 0.875 to 2.625 (Increased by 75%)
+                    let speed = 1.75 + Math.random() * 3.5; // Base: 1.75 to 5.25 (Increased by 100%)
                     let staminaDrain = 0.1;
 
                     // --- Zippy Chippy Exception ---
@@ -406,7 +406,7 @@
                                 speed -= 0.1; // Slow start
                             } else if (horse.position > midRaceStart && !horse.hasSpurted) {
                                 speed += 2.0; // Mid-race burst
-                                staminaDrain += 0.7; // Conserves stamina
+                                staminaDrain += 0.4; // Conserves stamina (was 0.7)
                                 horse.hasSpurted = true; // Only one burst
                             }
                             break;
@@ -425,7 +425,7 @@
                                 } else {
                                     // Spurt succeeded
                                     speed += 4.5; // Massive end burst
-                                    staminaDrain += 1.4; // Conserves stamina
+                                    staminaDrain += 0.8; // Conserves stamina (was 1.4)
                                     announcerBox.textContent = `${horse.name} makes a massive final spurt!`;
                                 }
                             }
@@ -460,7 +460,7 @@
                                 announcerBox.textContent = `Zippy Chippy tries to pull away but can't find the speed!`;
                             } else {
                                 speed += 5.0; // Massive burst
-                                staminaDrain += 1.4; // Conserves stamina
+                                staminaDrain += 0.8; // Conserves stamina (was 1.4)
                                 announcerBox.textContent = `Unbelievable! Zippy Chippy takes off down the stretch!`;
                             }
                         }
@@ -477,6 +477,12 @@
                     } else {
                         // Is tired, apply penalty
                         speed *= 0.5; // Significantly slower
+                        
+                        // --- New Stamina Recovery Logic ---
+                        horse.stamina += 0.2; // Slowly recover stamina
+                        if (horse.stamina > 30) { // Recovered
+                            horse.isTired = false;
+                        }
                     }
                     
                     horse.position += speed;

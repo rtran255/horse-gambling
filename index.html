@@ -365,7 +365,7 @@
 
                 for (const horse of horses) {
                     // Base speed
-                    let speed = 0.5 + Math.random() * 1.0; // Base: 0.5 to 1.5 (Increased by ~25%)
+                    let speed = 0.875 + Math.random() * 1.75; // Base: 0.875 to 2.625 (Increased by 75%)
                     let staminaDrain = 0.1;
 
                     // --- Zippy Chippy Exception ---
@@ -406,7 +406,7 @@
                                 speed -= 0.1; // Slow start
                             } else if (horse.position > midRaceStart && !horse.hasSpurted) {
                                 speed += 2.0; // Mid-race burst
-                                staminaDrain += 0.7; // Conserves stamina (was 1.0)
+                                staminaDrain += 0.7; // Conserves stamina
                                 horse.hasSpurted = true; // Only one burst
                             }
                             break;
@@ -425,7 +425,7 @@
                                 } else {
                                     // Spurt succeeded
                                     speed += 4.5; // Massive end burst
-                                    staminaDrain += 1.4; // Conserves stamina (was 2.0)
+                                    staminaDrain += 1.4; // Conserves stamina
                                     announcerBox.textContent = `${horse.name} makes a massive final spurt!`;
                                 }
                             }
@@ -460,7 +460,7 @@
                                 announcerBox.textContent = `Zippy Chippy tries to pull away but can't find the speed!`;
                             } else {
                                 speed += 5.0; // Massive burst
-                                staminaDrain += 1.4; // Conserves stamina (was 2.0)
+                                staminaDrain += 1.4; // Conserves stamina
                                 announcerBox.textContent = `Unbelievable! Zippy Chippy takes off down the stretch!`;
                             }
                         }

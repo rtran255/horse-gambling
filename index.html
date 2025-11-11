@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texas Gambler's Horse Bettin'</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the horse */
+        .horse {
+            width: 50px;
+            height: 30px;
+            position: absolute;
+            left: 10px;
+            bottom: 0;
+            transition: left 0.1s linear;
+            font-size: 24px; /* Using emoji */
+            line-height: 1;
+        }
+        .track-lane {
+            position: relative;
+            height: 60px; /* Increased height for name */
+            border-bottom: 2px dashed #9ca3af;
+        }
+        .track-lane:last-child {
+            border-bottom: 2px solid #111827;
+        }
+        .finish-line {
+            position: absolute;
+            right: 50px;
+            top: 0;
+            bottom: 0;
+            border-right: 5px dashed #ef4444;
+            width: 5px;
+        }
+        .horse-name {
+            position: absolute;
+            left: 65px;
+            bottom: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 0 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+        .lane-number {
+            position: absolute;
+            left: -20px;
+            bottom: 25px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white shadow-2xl rounded-lg overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-blue-800 text-white p-6">
+            <h1 class="text-3xl font-bold text-center">Texas Gambler's Horse Bettin'</h1>
+        </header>
+
+        <main class="p-4 md:p-6">
+            
+            <!-- Announcer Box -->
+            <div id="announcer-box" class="hidden bg-gray-900 text-white text-lg font-semibold p-4 rounded-lg mb-4 text-center shadow-lg">
+                And they're off!
+            </div>
+
+            <!-- Racetrack -->
+            <div id="racetrack" class="w-full bg-gray-200 p-6 rounded-lg shadow-inner relative overflow-hidden mb-6">
+                <div id="track-container" class="relative">
+                    <!-- Lanes will be generated here -->
+                </div>
+                <div class="finish-line"></div>
+            </div>
+
+            <!-- Betting and Info Panel -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+
+                <!-- Betting Panel -->
+                <div class="bg-gray-50 p-4 rounded-lg md:col-span-3">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-3 text-center">Place Your Bet</h2>
+                    
+                    <!-- Betting Controls -->
+                    <div id="betting-controls" class="flex flex-col sm:flex-row gap-4 items-end">
+                        <div class="flex-1 min-w-0">
+                            <label for="horse-select" class="block text-sm font-medium text-gray-700">Choose a Horse</label>
+                            <select id="horse-select" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <!-- Options will be generated here -->
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <label for="bet-amount" class="block text-sm font-medium text-gray-700">Bet Amount ($)</label>
+                            <input type="number" id="bet-amount" value="50" min="1" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <button id="start-race-btn" class="flex-shrink-0 self-end px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out">
+                            Start Race
+                        </button>
+                    </div>
+
+                    <!-- Cheer Button Moved Outside of 'betting-controls' to prevent locking -->
+                    <div class="flex justify-end mt-4">
+                        <button id="cheer-btn" class="flex-shrink-0 px-6 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 transition duration-300 ease-in-out hidden">
+                            Cheer!
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Money Panel -->
+                <div class="bg-blue-100 p-4 rounded-lg md:col-span-2 text-center flex flex-col justify-center">
+                    <h2 class="text-lg font-semibold text-blue-900">Your Money</h2>
+                    <p id="money-display" class="text-4xl font-bold text-blue-800 my-2">$1000</p>
+                    <button id="try-again-btn" class="hidden w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-300 ease-in-out">
+                        Try Again
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Message Log -->
+            <div id="message-log" class="mt-6 bg-gray-50 p-4 rounded-lg shadow-sm h-32 overflow-y-auto border border-gray-200">
+                <p class="text-gray-600 italic">Welcome to the races! Place your bet and select a horse.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Race Result -->
+    <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full text-center">
+            <h2 id="modal-title" class="text-3xl font-bold mb-4">Race Over!</h2>
+            <p id="modal-message" class="text-lg text-gray-700 mb-6">Horse #3 wins!</p>
+            <button id="next-race-btn" class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out">
+                Next Race
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- GAME STATE ---
+            let money = 1000;
+            let horses = [];
+            let raceInProgress = false;
+            let raceInterval;
+            let announcerInterval;
+            let lastAnnouncedLeaderId = -1;
+            let announcerCooldown = 0;
+            const ANNOUNCER_COOLDOWN_FRAMES = 100; // Frames before new message
+            const NUM_HORSES = 6;
+            const horseEmojis = ['🐎', '🐴', '🏇', '🐎', '🐴', '🏇']; // Different emojis for variety
+            const racingStyles = ['Front Runner', 'Pace Chaser', 'Late Surger', 'End Closer'];
+
+            // --- HORSE NAME GENERATION ---
+            const adjectives = [
+                'Quick', 'Rapid', 'Swift', 'Fast', 'Flying', 'Galloping', 'Dashing', 'Thunder', 'Lightning', 'Windy',
+                'Lucky', 'Golden', 'Silver', 'Shadow', 'Midnight', 'Crimson', 'River', 'Royal', 'King', 'Queen'
+            ];
+            const nouns = [
+                'Star', 'Dancer', 'Dreamer', 'Comet', 'Rocket', 'Flash', 'Fire', 'Glory', 'King', 'Queen', 'Prince',
+                'Duke', 'Lady', 'Spirit', 'Ghost', 'Legend', 'Legacy', 'Winner', 'Champion', 'Hero'
+            ];
+            const prebuiltNames = [
+                "Sunday Silence", "KidsLookinTouchable", "Secretariat", "Man o' War", "Seabiscuit", 
+                "War Admiral", "Citation", "Affirmed", "Alydar", "Zippy Chippy"
+            ];
+
+            // --- DOM ELEMENTS ---
+            const trackContainer = document.getElementById('track-container');
+            const horseSelect = document.getElementById('horse-select');
+            const betAmountInput = document.getElementById('bet-amount');
+            const startRaceBtn = document.getElementById('start-race-btn');
+            const cheerBtn = document.getElementById('cheer-btn');
+            const moneyDisplay = document.getElementById('money-display');
+            const messageLog = document.getElementById('message-log');
+            const resultModal = document.getElementById('result-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const nextRaceBtn = document.getElementById('next-race-btn');
+            const tryAgainBtn = document.getElementById('try-again-btn');
+            const bettingControls = document.getElementById('betting-controls');
+            const announcerBox = document.getElementById('announcer-box');
+
+
+            /**
+             * Generates a unique two-word name.
+             */
+            function getRandomName() {
+                const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+                const noun = nouns[Math.floor(Math.random() * nouns.length)];
+                return `${adj} ${noun}`;
+            }
+
+            /**
+             * Generates the horses for the race.
+             */
+            function generateHorses() {
+                horses = [];
+                const usedNames = new Set();
+
+                for (let i = 0; i < NUM_HORSES; i++) {
+                    let name;
+                    let isPrebuilt = false;
+
+                    // 25% chance to get a prebuilt name
+                    if (Math.random() < 0.25) {
+                        const availablePrebuilt = prebuiltNames.filter(n => !usedNames.has(n));
+                        if (availablePrebuilt.length > 0) {
+                            name = availablePrebuilt[Math.floor(Math.random() * availablePrebuilt.length)];
+                            isPrebuilt = true;
+                        }
+                    }
+
+                    // If no prebuilt name was assigned (or none were available), generate a random one
+                    if (!name) {
+                        do {
+                            name = getRandomName();
+                        } while (usedNames.has(name));
+                    }
+                    
+                    usedNames.add(name);
+
+                    horses.push({
+                        id: i + 1,
+                        name: name,
+                        emoji: horseEmojis[i],
+                        position: 0,
+                        stamina: 100,
+                        isTired: false,
+                        racingStyle: racingStyles[Math.floor(Math.random() * racingStyles.length)],
+                        isBuffed: false, // For Zippy's lucky day
+                        hasSpurted: false, // For Late Surger / End Closer
+                        spurtFailed: false, // For End Closer nerf
+                        element: null, // Will be set in renderTrack
+                        nameElement: null // Will be set in renderTrack
+                    });
+                }
+            }
+            
+            /**
+             * Renders the racetrack and horses.
+             */
+            function renderTrack() {
+                trackContainer.innerHTML = '';
+                horseSelect.innerHTML = '';
+                
+                horses.forEach((horse, index) => {
+                    // Create lane
+                    const lane = document.createElement('div');
+                    lane.className = 'track-lane';
+                    
+                    // Create lane number
+                    const laneNum = document.createElement('div');
+                    laneNum.className = 'lane-number';
+                    laneNum.textContent = horse.id;
+                    
+                    // Create horse element
+                    const horseEl = document.createElement('div');
+                    horseEl.className = 'horse';
+                    horseEl.textContent = horse.emoji;
+                    horseEl.style.left = '10px';
+                    horseEl.style.bottom = `${15}px`; // Center in lane
+                    
+                    // Create name element
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'horse-name';
+                    nameEl.textContent = horse.name;
+
+                    lane.appendChild(laneNum);
+                    lane.appendChild(horseEl);
+                    lane.appendChild(nameEl);
+                    trackContainer.appendChild(lane);
+                    
+                    // Store elements for later
+                    horse.element = horseEl;
+                    horse.nameElement = nameEl;
+
+                    // Add to select dropdown
+                    const option = document.createElement('option');
+                    option.value = horse.id;
+                    option.textContent = `Horse #${horse.id}: ${horse.name}`;
+                    horseSelect.appendChild(option);
+                });
+            }
+
+            /**
+             * Starts the race.
+             */
+            function startRace() {
+                const betAmount = parseInt(betAmountInput.value);
+                if (betAmount > money) {
+                    logMessage("You don't have enough money to place that bet!", 'error');
+                    return;
+                }
+                if (betAmount <= 0) {
+                    logMessage("Please enter a valid bet amount.", 'error');
+                    return;
+                }
+
+                // Lock controls
+                raceInProgress = true;
+                setBettingControls(false);
+
+                // Reset positions and clear logs
+                horses.forEach(h => {
+                    h.position = 0;
+                    h.stamina = 100;
+                    h.isTired = false;
+                    h.hasSpurted = false;
+                    h.spurtFailed = false; // Reset spurt fail state
+                    h.isBuffed = false; // Reset buff state
+
+                    // Check if this is Zippy's lucky day (1 in 5 chance)
+                    if (h.name === "Zippy Chippy") {
+                        if (Math.random() < (1 / 5)) { // Changed from 1/50
+                            h.isBuffed = true;
+                            logMessage("Zippy Chippy looks feisty today! It might be his lucky day!", 'info');
+                        }
+                    }
+
+                    // Check if End Closer will fail spurt (20% chance)
+                    if (h.racingStyle === 'End Closer' && Math.random() < 0.20) {
+                        h.spurtFailed = true;
+                    }
+
+                    h.element.style.left = '10px';
+                    h.nameElement.style.left = '65px';
+                });
+                
+                logMessage("And they're off!", 'info');
+                announcerBox.textContent = "And they're off!";
+                announcerBox.classList.remove('hidden');
+                cheerBtn.classList.remove('hidden');
+                lastAnnouncedLeaderId = -1;
+                announcerCooldown = 0;
+
+                // Start game loops
+                raceInterval = setInterval(raceLoop, 50); // Slower interval for smoother animation
+                announcerInterval = setInterval(updateAnnouncer, 100);
+            }
+
+            /**
+             * The main race game loop.
+             */
+            function raceLoop() {
+                if (!raceInProgress) {
+                    clearInterval(raceInterval);
+                    return;
+                }
+
+                const trackWidth = trackContainer.clientWidth;
+                const finishPosition = trackWidth - 70; // 50px horse + 20px padding
+                
+                // Position thresholds for styles
+                const earlyRaceEnd = finishPosition * 0.2; // For Pace Chaser nerf
+                const midRaceStart = finishPosition * 0.4;
+                const lateRaceStart = finishPosition * 0.8;
+
+                let winner = null;
+
+                for (const horse of horses) {
+                    // Base speed
+                    let speed = 0.4 + Math.random() * 0.8; // Base: 0.4 to 1.2 (Increased from 0.3-1.0)
+                    let staminaDrain = 0.1;
+
+                    // --- Zippy Chippy Exception ---
+                    if (horse.name === "Zippy Chippy" && !horse.isBuffed) {
+                        horse.racingStyle = 'Zippy'; // Override style
+                    }
+
+                    // --- Apply Racing Style Logic ---
+                    switch (horse.racingStyle) {
+                        case 'Front Runner':
+                            if (horse.position < midRaceStart) {
+                                speed += 0.3; // Fast start
+                                staminaDrain += 0.15;
+
+                                // --- Front Runner Nerf ---
+                                // Small chance to burn out and lose a chunk of stamina
+                                if (Math.random() < 0.005 && !horse.isTired) {
+                                    horse.stamina -= 30; // Big stamina hit
+                                    announcerCooldown = 0;
+                                    lastAnnouncedLeaderId = -1;
+                                    announcerBox.textContent = `${horse.name} started too fast and is burning out!`;
+                                }
+
+                            } else {
+                                speed -= 0.1; // Fades a bit
+                            }
+                            break;
+                        case 'Pace Chaser':
+                            // --- Pace Chaser Nerf: Slow start ---
+                            if (horse.position < earlyRaceEnd) {
+                                speed -= 0.05; // Slightly slow start
+                            } else {
+                                speed += 0.15; // Consistently a bit faster after start
+                            }
+                            break;
+                        case 'Late Surger':
+                            if (horse.position < midRaceStart) {
+                                speed -= 0.1; // Slow start
+                            } else if (horse.position > midRaceStart && !horse.hasSpurted) {
+                                speed += 2.0; // Mid-race burst
+                                staminaDrain += 0.7; // Conserves stamina (was 1.0)
+                                horse.hasSpurted = true; // Only one burst
+                            }
+                            break;
+                        case 'End Closer':
+                            if (horse.position < lateRaceStart) {
+                                speed -= 0.15; // Very slow start
+                            } else if (!horse.hasSpurted) {
+                                horse.hasSpurted = true; // Mark as spurt attempted
+                                announcerCooldown = 0;
+                                lastAnnouncedLeaderId = -1;
+
+                                // --- End Closer Nerf ---
+                                if (horse.spurtFailed) {
+                                    // Spurt failed
+                                    announcerBox.textContent = `${horse.name} looks for a final spurt but can't find it!`;
+                                } else {
+                                    // Spurt succeeded
+                                    speed += 4.5; // Massive end burst
+                                    staminaDrain += 1.4; // Conserves stamina (was 2.0)
+                                    announcerBox.textContent = `${horse.name} makes a massive final spurt!`;
+                                }
+                            }
+                            break;
+                        case 'Zippy':
+                            speed = 0.1 + Math.random() * 0.2; // Zippy is just slow
+                            staminaDrain = 0; // Doesn't even get tired
+                            break;
+                    }
+
+                    // --- Apply Pre-built Buffs (if not Zippy) ---
+                    const isPrebuilt = prebuiltNames.includes(horse.name);
+                    if (isPrebuilt && horse.name !== "Zippy Chippy") {
+                        speed += 0.2; // Buff for famous horses
+                    }
+                    
+                    // --- Zippy's Lucky Day Buff (overrides style) ---
+                    if (horse.name === "Zippy Chippy" && horse.isBuffed) {
+                        speed = 0.5 + Math.random() * 0.8; // Good speed
+                        if (Math.random() > 0.95) {
+                            speed += 1.5; // Random bursts
+                            staminaDrain += 0.5;
+                        }
+                        // Lucky Zippy can ALSO be an End Closer (re-purposing 'hasSpurted')
+                        if (horse.position > lateRaceStart && !horse.hasSpurted) {
+                            horse.hasSpurted = true;
+                            announcerCooldown = 0;
+                            lastAnnouncedLeaderId = -1;
+                            
+                            // Lucky Zippy's spurt can *also* fail (same 20% chance)
+                            if (Math.random() < 0.20) {
+                                announcerBox.textContent = `Zippy Chippy tries to pull away but can't find the speed!`;
+                            } else {
+                                speed += 5.0; // Massive burst
+                                staminaDrain += 1.4; // Conserves stamina (was 2.0)
+                                announcerBox.textContent = `Unbelievable! Zippy Chippy takes off down the stretch!`;
+                            }
+                        }
+                    }
+
+                    // --- Stamina Effect ---
+                    if (!horse.isTired) {
+                        horse.stamina -= staminaDrain;
+                        if (horse.stamina <= 30) {
+                            horse.isTired = true;
+                            announcerCooldown = 0; // Allow announcer to see this
+                            lastAnnouncedLeaderId = -1; // Force new announcement
+                        }
+                    } else {
+                        // Is tired, apply penalty
+                        speed *= 0.5; // Significantly slower
+                    }
+                    
+                    horse.position += speed;
+
+                    // Update visual position
+                    horse.element.style.left = `${10 + horse.position}px`;
+                    horse.nameElement.style.left = `${65 + horse.position}px`;
+
+                    // Check for winner
+                    if (horse.position >= finishPosition) {
+                        winner = horse;
+                        break; // We have a winner
+                    }
+                }
+
+                if (winner) {
+                    endRace(winner);
+                }
+            }
+
+            /**
+             * Updates the announcer text periodically.
+             */
+            function updateAnnouncer() {
+                if (!raceInProgress) {
+                    clearInterval(announcerInterval);
+                    return;
+                }
+
+                announcerCooldown++;
+                if (announcerCooldown < ANNOUNCER_COOLDOWN_FRAMES) {
+                    return; // Wait for cooldown
+                }
+
+                // --- Find Leader and Second Place ---
+                const sortedHorses = [...horses].sort((a, b) => b.position - a.position);
+                const leader = sortedHorses[0];
+                const secondPlace = sortedHorses[1];
+                
+                // --- Check for new events first ---
+
+                // 1. Check if leader is tired
+                if (leader.isTired && leader.id === lastAnnouncedLeaderId) {
+                    announcerBox.textContent = `${leader.name} is fading! They're losing steam!`;
+                    lastAnnouncedLeaderId = -1; // Allow a new leader to be announced
+                    announcerCooldown = 0;
+                    return;
+                }
+                
+                // --- Standard Leader Announcements ---
+                // (Spurt announcements are now handled in raceLoop for immediacy)
+                if (leader.id !== lastAnnouncedLeaderId) {
+                    const leadAmount = leader.position - secondPlace.position;
+                    let message = "";
+
+                    if (leadAmount > 100) {
+                        message = `${leader.name} is pulling away from the pack!`;
+                    } else if (leadAmount < 10) {
+                        message = `It's a close race! ${leader.name} and ${secondPlace.name} are neck and neck!`;
+                    } else {
+                        message = `${leader.name} has taken the lead!`;
+                    }
+                    
+                    announcerBox.textContent = message;
+                    lastAnnouncedLeaderId = leader.id;
+                    announcerCooldown = 0; // Reset cooldown
+                }
+            }
+
+            /**
+             * Gives the selected horse a one-time speed boost.
+             */
+            function cheerForHorse() {
+                const betOnHorseId = parseInt(horseSelect.value);
+                const cheeredHorse = horses.find(h => h.id === betOnHorseId);
+
+                if (cheeredHorse && raceInProgress) {
+                    cheeredHorse.position += 15; // Instant boost
+                    
+                    // Update visual position immediately
+                    const trackWidth = trackContainer.clientWidth;
+                    const finishPosition = trackWidth - 70;
+                    if (cheeredHorse.position > finishPosition) {
+                        cheeredHorse.position = finishPosition;
+                    }
+                    cheeredHorse.element.style.left = `${10 + cheeredHorse.position}px`;
+                    cheeredHorse.nameElement.style.left = `${65 + cheeredHorse.position}px`;
+
+                    logMessage("You cheered for your horse!", 'info');
+                    cheerBtn.disabled = true; // Disable after one use
+                    cheerBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            /**
+             * Ends the race and calculates results.
+             * @param {object} winner - The winning horse object.
+             */
+            function endRace(winner) {
+                raceInProgress = false;
+                clearInterval(raceInterval);
+                clearInterval(announcerInterval);
+
+                const betOnHorseId = parseInt(horseSelect.value);
+                const betAmount = parseInt(betAmountInput.value);
+
+                let title = "Race Over!";
+                let message = `The winner is ${winner.name}!`;
+
+                if (winner.id === betOnHorseId) {
+                    const winnings = betAmount * (NUM_HORSES / 2); // Simple odds
+                    money += winnings;
+                    title = "You Won!";
+                    message = `${winner.name} wins! You won $${winnings.toFixed(0)}!`;
+                    logMessage(message, 'success');
+                } else {
+                    money -= betAmount;
+                    title = "You Lost!";
+                    message = `${winner.name} wins! You lost $${betAmount}.`;
+                    logMessage(message, 'error');
+                }
+
+                updateMoneyDisplay();
+                
+                // Show modal
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                resultModal.classList.remove('hidden');
+
+                announcerBox.textContent = `${winner.name} wins the race!`;
+            }
+
+            /**
+             * Resets the game for the next race.
+             */
+            function resetForNextRace() {
+                resultModal.classList.add('hidden');
+                cheerBtn.classList.add('hidden');
+                cheerBtn.disabled = false;
+                cheerBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                generateHorses();
+                renderTrack();
+                setBettingControls(true);
+                logMessage("Place your bets for the next race.", 'system');
+                announcerBox.classList.add('hidden');
+            }
+
+            /**
+             * Enables or disables betting controls.
+             * @param {boolean} enabled - Whether to enable or disable.
+             */
+            function setBettingControls(enabled) {
+                // Select only the controls in the 'betting-controls' div
+                const controlsToToggle = bettingControls.querySelectorAll('input, select, button');
+                controlsToToggle.forEach(control => {
+                    control.disabled = !enabled;
+                    if (enabled) {
+                        control.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        control.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+            }
+
+            /**
+             * Updates the money display and checks for game over.
+             */
+            function updateMoneyDisplay() {
+                moneyDisplay.textContent = `$${money.toFixed(0)}`;
+                if (money <= 0) {
+                    logMessage("You've gone broke! Game over.", 'error');
+                    setBettingControls(false);
+                    tryAgainBtn.classList.remove('hidden');
+                    startRaceBtn.disabled = true; // Ensure it's disabled
+                } else {
+                    tryAgainBtn.classList.add('hidden');
+                }
+
+                // Update max bet
+                betAmountInput.max = money;
+                if (parseInt(betAmountInput.value) > money) {
+                    betAmountInput.value = money;
+                }
+            }
+
+            /**
+             * Resets the game state when the player goes broke.
+             */
+            function tryAgain() {
+                money = 1000;
+                updateMoneyDisplay();
+                resetForNextRace();
+                logMessage("You have a fresh start! Good luck!", 'success');
+            }
+
+            /**
+             * Logs a message to the message box.
+             * @param {string} text - The message text.
+             * @param {string} type - 'info', 'success', 'error', 'system'.
+             */
+            function logMessage(text, type = 'info') {
+                const p = document.createElement('p');
+                p.textContent = text;
+                
+                switch(type) {
+                    case 'success': p.className = 'text-green-600 font-semibold'; break;
+                    case 'error': p.className = 'text-red-600 font-semibold'; break;
+                    case 'system': p.className = 'text-gray-600 italic'; break;
+                    case 'info':
+                    default: p.className = 'text-gray-800';
+                }
+                
+                messageLog.appendChild(p);
+                messageLog.scrollTop = messageLog.scrollHeight; // Auto-scroll
+            }
+
+            // --- EVENT LISTENERS ---
+            startRaceBtn.addEventListener('click', startRace);
+            cheerBtn.addEventListener('click', cheerForHorse);
+            nextRaceBtn.addEventListener('click', resetForNextRace);
+            tryAgainBtn.addEventListener('click', tryAgain);
+
+            // --- INITIALIZATION ---
+            generateHorses();
+            renderTrack();
+            updateMoneyDisplay();
+        });
+    </script>
+</body>
+</html>
